@@ -1,0 +1,114 @@
+<html>
+<head>
+    <style>
+        .row {
+            width: 50%;
+            clear: both;
+            height: 30px;
+        }
+
+        .cellLabel {
+            width: 20%;
+            text-align: right;
+            float: left;
+        }
+
+        .cell {
+            width: 80%;
+            text-align: left;
+            float: left;
+        }
+    </style>
+</head>
+<body>
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+    <script src="http://localhost:29933/__lwpush/client"></script>
+    <script>
+
+        $(function () {            
+
+            var connected = false;
+            var client;
+
+            $("#connect").click(function () {
+
+                if (!connected) {
+
+                    client = new LWMessagePushClient(
+                        function (msg) {
+
+                            $("#results").val($("#results").val() + "Message: " + JSON.stringify(msg) + "\n");
+
+                        },
+                        $("#serverUrl").val(),
+                        "test",
+                        $('input[name=conType]:checked').val(), //LWMessagePushConnectionMethod.Automatic,
+                        function (log) {
+                            $("#results").val($("#results").val() + "\n" + log);
+                        });
+
+
+                    client.connect();
+                    connected = true;
+                    $("#connect").text("Disconnect");
+                }
+                else
+                {
+                    client.disconnect();
+                    connected = false;
+                    $("#connect").text("Connect");
+                }
+
+            });
+        });
+    </script>
+    <h2>Sample App</h2>
+    <div>
+        To send "testmsg" message to "test" topic call: http://localhost:29933/home/sendmessage?topic=test&msg=testmsg
+        <br /><br />
+        <div class="row">
+            <div class="cellLabel">
+                Connection Type:
+            </div>
+            <div class="cell">
+                <input type="radio" name="conType" value="automatic" checked> Automatic
+                <input type="radio" name="conType" value="websocket"> Web Socket
+                <input type="radio" name="conType" value="longpolling"> Long Polling
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="cellLabel">
+                LWMessagePush Server Url:
+            </div>
+            <div class="cell">
+                <input type="text" id="serverUrl" value="http://localhost:29933" style="width:100%;" />
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="cellLabel">
+                Topic:
+            </div>
+            <div class="cell">
+                <input type="text" id="topic" value="test" style="width:80%;" />
+                <button id="connect" style="width:138px;">Connect</button>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="cellLabel">
+                Communication Log:
+            </div>
+            <div class="cell">
+                <textarea id="results" style="width:100%; height:500px;"></textarea>
+            </div>
+        </div>
+
+    </div>
+
+
+</body>
+</html>
+
+
