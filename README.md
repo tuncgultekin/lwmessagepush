@@ -40,10 +40,8 @@ http://{your_application_path}/**__lwpush/client**
 2) Configure LWMessagePush client and connect:
 ```sh
 <script>
+	var client;
 	$(function () {            
-
-		var client;
-
 		client = new LWMessagePushClient(
 			function (msg) {
 				// onMessageReceive callback
@@ -59,5 +57,12 @@ http://{your_application_path}/**__lwpush/client**
 	});
 </script>
 ```
-
- That's all to run LWMessagePush, checkout SampleApp for further details...
+3) To disconnect:
+```sh
+<script>
+	...
+	client.disconnect();
+	...
+</script>
+```
+ That's all to run LWMessagePush, for further details, please checkout SampleApp...
