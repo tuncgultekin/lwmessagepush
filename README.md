@@ -1,4 +1,4 @@
-[![NuGet version](https://badge.fury.io/nu/VBLock.svg)](https://badge.fury.io/nu/VBLock) 
+[![NuGet version](https://badge.fury.io/nu/LWMessagePush.svg)](https://badge.fury.io/nu/LWMessagePush)
 LW-MessagePush
 =========
 LW-MessagePush is a highly customizable and light-weight, message pushing library for .NET Core web applications.
