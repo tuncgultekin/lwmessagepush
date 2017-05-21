@@ -1,7 +1,7 @@
 [![NuGet version](https://badge.fury.io/nu/VBLock.svg)](https://badge.fury.io/nu/VBLock) 
-Lw-MessagePush
+LW-MessagePush
 =========
-Lw-MessagePush is a highly customizable and light-weight, message pushing library for .NET Core web applications.
+LW-MessagePush is a highly customizable and light-weight, message pushing library for .NET Core web applications.
 It supports both websocket and long polling connection methods with auto-fallback feature.
 
 Usage
@@ -28,6 +28,22 @@ public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerF
     
     ...
 }
+```
+
+3) To send a message to subscribers of a topic:
+```sh
+...
+
+var message = new LWMessagePush.DTOs.PushMessage()
+{
+	MessageId = Guid.NewGuid(),
+	Topic = "TopicThatYouWantToSendMessage",
+	Content = "MessageContent"
+};
+
+await _messagingService.SendMesageToTopic(topic, message);
+
+...
 ```
 
 For client side code (any html page or mvc view):
@@ -65,4 +81,22 @@ http://{your_application_path}/**__lwpush/client**
 	...
 </script>
 ```
- That's all to run LWMessagePush, for further details, please checkout SampleApp...
+ That's all to run LWMessagePush, for further details, please checkout SampleApp.
+
+Customization
+-----------
+LW-MessagePush injects 3 default services as:
+
+```sh
+public static void AddLWMessagePushDefaultServices(this IServiceCollection services)
+{
+    services.AddSingleton<IPersistanceService, InMemoryPersistanceService>();
+    services.AddSingleton<IConnectionHandlerFactoryService, ConnectionHandlerFactoryService>();
+    services.AddSingleton<IMessagingService, MessagingService>();
+}
+```
+**IPersistanceService** is responsible for message persistance and all messages are kept in the memory (with InMemoryPersistanceService). You may want to change this behaviour and persist messages to a db. To do so you can create your custom persistance service which implements IPersistanceService and inject it as Singleton.
+
+**IConnectionHandlerFactoryService** is used for to retrieve connection handler types such as WebSocketConnectionHandler, LongPollingConnectionHandler. If you need to use your own connection method, you may customize it. 
+
+**IMessagingService** is used for to send a message to all opened connections. 
