@@ -81,7 +81,7 @@ http://{your_application_path}/**__lwpush/client**
 	...
 </script>
 ```
- That's all to run LWMessagePush, for further details, please checkout SampleApp.
+ That's all to run LWMessagePush, for further details, please check out SampleApp.
 
 Customization
 -----------
