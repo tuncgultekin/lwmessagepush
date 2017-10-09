@@ -19,6 +19,7 @@ namespace LWMessagePush.Handlers
 
         private IPersistanceService _persistanceService;
         private static EventWaitHandle _waitHandle = new ManualResetEvent(false);
+        private object _waitHandleTransitionLock = new object();
 
         #endregion
 
@@ -46,20 +47,35 @@ namespace LWMessagePush.Handlers
         /// <returns></returns>
         public async Task HandleRequest(HttpContext context, LWMessagePushMiddlewareOptions options)
         {
-            var startDateTime = DateTime.UtcNow;
-            var endDateTime = startDateTime.AddSeconds(options.LongPollingConfiguration.TimeoutSeconds);
-            string topic = context.Request.Query["topic"];
-            string lastReceive = context.Request.Query["lastr"];
+            try
+            {
+                var startDateTime = DateTime.UtcNow;
+                var endDateTime = startDateTime.AddSeconds(options.LongPollingConfiguration.TimeoutSeconds);
+                string topic = context.Request.Query["topic"];
+                string lastReceive = context.Request.Query["lastr"];
 
-            if (topic == null)
-                throw new ArgumentNullException("Topic is required.");
+                options.LogListener.Log(string.Format("LongPolling request is received at {0} UTC for {1}", startDateTime.ToString(), topic), Logging.LogLevel.Verbose);
 
-            DateTime lastReceivedMsgDT = DateTime.UtcNow;
-            if (lastReceive != null)
-                DateTime.TryParse(lastReceive, out lastReceivedMsgDT);
+                if (topic == null)
+                {
+                    string err = "Topic is required.";
+                    options.LogListener.Log(string.Format("LongPolling handler error: {0}", err), Logging.LogLevel.Error);
+                    throw new ArgumentNullException(err);
+                }
 
-            List<PushMessage> messageList = Internal_HandleRequest(topic, endDateTime, lastReceivedMsgDT);
-            await context.Response.WriteAsync(Newtonsoft.Json.JsonConvert.SerializeObject(messageList));            
+                DateTime lastReceivedMsgDT = DateTime.UtcNow;
+                if (lastReceive != null)
+                    DateTime.TryParse(lastReceive, out lastReceivedMsgDT);
+
+                List<PushMessage> messageList = Internal_HandleRequest(topic, endDateTime, lastReceivedMsgDT);
+                await context.Response.WriteAsync(Newtonsoft.Json.JsonConvert.SerializeObject(messageList));
+            }
+            catch (Exception e)
+            {
+                options.LogListener.Log(string.Format("LongPolling handler error: {0}", e.Message), Logging.LogLevel.Error);
+                throw e;
+            }
+           
         }
 
         /// <summary>
@@ -70,8 +86,11 @@ namespace LWMessagePush.Handlers
         /// <returns></returns>
         public async Task PushMessage(string topic, PushMessage message)
         {
-            _waitHandle.Set();
-            _waitHandle.Reset();
+            lock (_waitHandleTransitionLock)
+            {
+                _waitHandle.Set();
+                _waitHandle.Reset();
+            }
 
             await Task.CompletedTask;
         }
@@ -89,6 +108,11 @@ namespace LWMessagePush.Handlers
         /// <returns></returns>
         private List<PushMessage> Internal_HandleRequest(string topic, DateTime endDateTime, DateTime? lastReceivedMsgDT)
         {
+            lock(_waitHandleTransitionLock)
+            {
+                // Waitfor proper _waitHandle transition to avoid stackoverflow
+            }
+
             var messages = _persistanceService.Get(topic, lastReceivedMsgDT);
             if ((messages != null) && (messages.Count>0))
                 return messages;

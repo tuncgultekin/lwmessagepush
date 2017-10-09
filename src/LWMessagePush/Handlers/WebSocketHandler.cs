@@ -50,30 +50,45 @@ namespace LWMessagePush.Handlers
         /// <returns></returns>
         public async Task HandleRequest(HttpContext context, LWMessagePushMiddlewareOptions options)
         {
-            if (context.WebSockets.IsWebSocketRequest)
+            try
             {
-                if (!context.Request.Query.ContainsKey("topic"))
-                    throw new ArgumentNullException("Topic missing");
+                if (context.WebSockets.IsWebSocketRequest)
+                {
+                    if (!context.Request.Query.ContainsKey("topic"))
+                    {
+                        string err = "Topic is required.";
+                        options.LogListener.Log(string.Format("WebSocket handler error: {0}", err), Logging.LogLevel.Error);
+                        throw new ArgumentNullException(err);
+                    }
 
-                string topic = context.Request.Query["topic"];
-                Guid socketId = Guid.NewGuid();
-                string lastReceive = context.Request.Query["lastr"];
-                DateTime lastReceivedMsgDT = DateTime.UtcNow;
-                if (lastReceive != null)
-                    DateTime.TryParse(lastReceive, out lastReceivedMsgDT);
+                    string topic = context.Request.Query["topic"];
+                    Guid socketId = Guid.NewGuid();
+                    string lastReceive = context.Request.Query["lastr"];
+                    DateTime lastReceivedMsgDT = DateTime.UtcNow;
+                    options.LogListener.Log(string.Format("WebSocket connection request is received at {0} UTC for {1}", lastReceivedMsgDT.ToString(), topic), Logging.LogLevel.Verbose);
 
-                WebSocket webSocket = await context.WebSockets.AcceptWebSocketAsync();
-                WebSocketItemInfo socketInfo = new WebSocketItemInfo(webSocket, lastReceivedMsgDT);
-                var newTopicDict = new ConcurrentDictionary<Guid, WebSocketItemInfo>();
-                newTopicDict.TryAdd(socketId, socketInfo);
+                    if (lastReceive != null)
+                        DateTime.TryParse(lastReceive, out lastReceivedMsgDT);
 
-                _sockets.AddOrUpdate(topic, newTopicDict, (a, b) => { b.TryAdd(socketId, socketInfo); return b; });
-                await ProcessRequest(context, socketId, socketInfo, topic);
+                    WebSocket webSocket = await context.WebSockets.AcceptWebSocketAsync();
+                    WebSocketItemInfo socketInfo = new WebSocketItemInfo(webSocket, lastReceivedMsgDT);
+                    var newTopicDict = new ConcurrentDictionary<Guid, WebSocketItemInfo>();
+                    newTopicDict.TryAdd(socketId, socketInfo);
+
+                    _sockets.AddOrUpdate(topic, newTopicDict, (a, b) => { b.TryAdd(socketId, socketInfo); return b; });
+                    await ProcessRequest(context, socketId, socketInfo, topic);
+                }
+                else
+                {
+                    context.Response.StatusCode = 400;
+                }
             }
-            else
+            catch (Exception e)
             {
-                context.Response.StatusCode = 400;
+                options.LogListener.Log(string.Format("WebSocket handler error: {0}", e.Message), Logging.LogLevel.Error);
+                throw e;
             }
+            
         }
 
         /// <summary>
@@ -116,7 +131,11 @@ namespace LWMessagePush.Handlers
 
             byte[] messageAsBytes = Encoding.UTF8.GetBytes(Newtonsoft.Json.JsonConvert.SerializeObject(message));
 
-            await socketConn.SendAsync(new ArraySegment<byte>(messageAsBytes), WebSocketMessageType.Text, true, CancellationToken.None);
+            try
+            {
+                await socketConn.SendAsync(new ArraySegment<byte>(messageAsBytes), WebSocketMessageType.Text, true, CancellationToken.None);
+            }
+            catch { }
         }
 
         /// <summary>

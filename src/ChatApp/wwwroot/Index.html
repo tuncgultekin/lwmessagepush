@@ -1,0 +1,40 @@
+﻿<html>
+<head>
+    <title>LWMessage Push Chat</title>
+    <link rel="stylesheet" type="text/css" href="/Content/Css/app.css">
+</head>
+<body>
+    <script src="/Content/Js/jquery-3.2.1.min.js"></script>
+    <script src="/__lwpush/client"></script>
+    <script src="/Content/Js/app.js"></script>
+
+    <div id="loginPanel" class="entry">
+        <img src="/Content/Images/logo.png" />
+        <input name="nickname" id="nickname" placeholder="Enter your nick name" type="text" class="inputbox" value="">
+        <div id="login_btn" class="chatBtn" onclick="login()"><div class="title">LOGIN</div></div>
+    </div>
+
+    <div id="header">
+        <div id="logout_btn" class="chatBtn" onclick="logout()"><div id="logout-link" class="title"> Logout </div></div>
+    </div>
+
+    <div id="mainPanel" class="layout">
+        <div class="left-col">
+            <div class="left-col-title"><div class="title">Online Users</div></div>
+            <hr class="user-title-sep" />
+            <div id="personList" class="left-col-content"> </div>
+        </div>
+        <div class="right-col">
+            <div id="messageList" class="message-list-cell"></div>
+            <hr class="message-sep" />
+            <div class="message-cell">
+                <textarea id="message_txt" disabled="true"></textarea>
+                <div id="sendmessage_btn" class="chatBtn" onclick="sendMessage()"><div class="title">Send</div></div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
+
+

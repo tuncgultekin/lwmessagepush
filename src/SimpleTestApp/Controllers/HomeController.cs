@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using LWMessagePush.Interfaces;
 
-namespace SampleApp.Controllers
+namespace SimpleTestApp.Controllers
 {
     public class HomeController : Controller
     {

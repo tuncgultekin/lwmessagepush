@@ -16,8 +16,11 @@ namespace LWMessagePush.Services
     {
         #region Fields
 
+        private const int GARBAGE_COLLECTION_PERIOD_MS = 30000;
+        private const int OLD_MESSAGE_MINUTES_OLD = 1;
         private static Dictionary<string, List<PushMessage>> _storage = new Dictionary<string, List<PushMessage>>();
         private static ReaderWriterLockSlim _lock = new ReaderWriterLockSlim();
+        private Timer _garbageCollectorTimer = new Timer(GarbageCollectorTimerElapsed, null, 1000, GARBAGE_COLLECTION_PERIOD_MS);
 
         #endregion
 
@@ -59,29 +62,7 @@ namespace LWMessagePush.Services
         /// <param name="createdBeforeUtcDt">CreatedBeforeUtcDt filter</param>
         public void Remove(string topic, DateTime? createdBeforeUtcDt)
         {
-            try
-            {
-                _lock.EnterWriteLock();
-
-                List<PushMessage> messages;
-                _storage.TryGetValue(topic, out messages);
-
-                if (messages != null)
-                    if (createdBeforeUtcDt.HasValue)
-                        messages.RemoveAll(t => t.CreationUTC <= createdBeforeUtcDt.Value.ToUniversalTime());
-                    else
-                        messages.Clear();
-
-                if (messages == null || messages.Count == 0)
-                    _storage.Remove(topic);
-
-
-            }
-            finally 
-            {
-                if (_lock.IsWriteLockHeld)
-                    _lock.ExitWriteLock();
-            }
+            Inner_Remove(topic, createdBeforeUtcDt);
         }
 
         /// <summary>
@@ -101,6 +82,51 @@ namespace LWMessagePush.Services
                     messages.Add(item);
                 else
                     _storage.Add(item.Topic, new List<PushMessage>() { item });
+            }
+            finally
+            {
+                if (_lock.IsWriteLockHeld)
+                    _lock.ExitWriteLock();
+            }
+        }
+
+        /// <summary>
+        /// Garbage collection timer for old messages
+        /// </summary>
+        /// <param name="state"></param>
+        private static void GarbageCollectorTimerElapsed(object state)
+        {
+            List<string> topics = _storage.Keys.ToList<string>();
+            foreach (var topic in topics)
+            {
+                Inner_Remove(topic, DateTime.UtcNow.AddMinutes(OLD_MESSAGE_MINUTES_OLD));
+            }
+        }
+
+        /// <summary>
+        /// Removes messages whose creationDt are older than specified createdBeforeUtcDt
+        /// </summary>
+        /// <param name="topic">Message topic filter</param>
+        /// <param name="createdBeforeUtcDt">CreatedBeforeUtcDt filter</param>
+        private static void Inner_Remove(string topic, DateTime? createdBeforeUtcDt)
+        {
+            try
+            {
+                _lock.EnterWriteLock();
+
+                List<PushMessage> messages;
+                _storage.TryGetValue(topic, out messages);
+
+                if (messages != null)
+                    if (createdBeforeUtcDt.HasValue)
+                        messages.RemoveAll(t => t.CreationUTC <= createdBeforeUtcDt.Value.ToUniversalTime());
+                    else
+                        messages.Clear();
+
+                if (messages == null || messages.Count == 0)
+                    _storage.Remove(topic);
+
+
             }
             finally
             {

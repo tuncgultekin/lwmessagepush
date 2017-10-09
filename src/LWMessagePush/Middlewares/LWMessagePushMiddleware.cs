@@ -73,7 +73,5 @@ namespace LWMessagePush.Middlewares
             else
                 await _next(context);
         }
-
-       
     }
 }

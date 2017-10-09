@@ -1,4 +1,7 @@
-﻿var LWMessagePushConnectionMethod = {
+﻿/**
+ *  Connection Types
+ */
+var LWMessagePushConnectionMethod = {
 
     Automatic: "automatic",
     WebSocket: "websocket",
@@ -6,6 +9,14 @@
 
 };
 
+/**
+ *  Main LW-MessagePushClient function
+ * @param {function} onMessageReceived callback function, which is called in case of new message is received
+ * @param {string} serverUrl the url, where the LW-MessagePush is hosted
+ * @param {string} topic subscribed topic, whose messages is received
+ * @param {LWMessagePushConnectionMethod} connectionMethod connection type
+ * @param {function} logger callback function, which is called on event logs
+ */
 var LWMessagePushClient = function (onMessageReceived, serverUrl, topic, connectionMethod, logger) {
 
     if (!onMessageReceived)
@@ -33,11 +44,15 @@ var LWMessagePushClient = function (onMessageReceived, serverUrl, topic, connect
 
     // Published methods
 
+    /**
+    *  Connects frontend to backend using available (automatic mode) or selected connection method
+    *  In automatic mode; first it checks websocket availability. If it is not available it fall-backs to long polling connection method
+    **/
     this.connect = function () {
 
         var supportsWebSockets = "WebSocket" in window;
 
-        if (_connectionMethod == LWMessagePushConnectionMethod.Automatic) {
+        if (_connectionMethod === LWMessagePushConnectionMethod.Automatic) {
             if (supportsWebSockets)
                 try {
                     connectWithWebSocket();
@@ -50,25 +65,28 @@ var LWMessagePushClient = function (onMessageReceived, serverUrl, topic, connect
             else
                 connectWithLongPolling();
         }
-        else if (_connectionMethod == LWMessagePushConnectionMethod.WebSocket) {
+        else if (_connectionMethod === LWMessagePushConnectionMethod.WebSocket) {
             if (supportsWebSockets)
                 connectWithWebSocket();
             else
                 throw "Websockets is not supported for this browser";
         }
-        else if (_connectionMethod == LWMessagePushConnectionMethod.LongPolling)
+        else if (_connectionMethod === LWMessagePushConnectionMethod.LongPolling)
             connectWithLongPolling();
         else
             throw "LWMessagePushConnectionMethod '" + _connectionMethod + "' is not supported";
     }
 
+    /**
+    *  Disconnects frontend from backend
+    **/
     this.disconnect = function () {
 
-        if (_activeConnectionMethod == LWMessagePushConnectionMethod.WebSocket) {
-            if (!(!_socket || _socket.readyState != WebSocket.OPEN))
+        if (_activeConnectionMethod === LWMessagePushConnectionMethod.WebSocket) {
+            if (!(!_socket || _socket.readyState !== WebSocket.OPEN))
                 _socket.close(1000, "Closing from client");
         }
-        else if (_activeConnectionMethod == LWMessagePushConnectionMethod.LongPolling) {
+        else if (_activeConnectionMethod === LWMessagePushConnectionMethod.LongPolling) {
             if ((_longPollReq) && (_longPollReq.abort)) {
                 _longPollReq.abort();
                 _longPollReq = null;
@@ -79,8 +97,13 @@ var LWMessagePushClient = function (onMessageReceived, serverUrl, topic, connect
         _activeConnectionMethod = -1;
     }
 
+    //////////////////////
+
     // Private functions
 
+    /**
+     *  Connects frontend to backend by using websocket method
+     */
     function connectWithWebSocket() {
 
         _activeConnectionMethod = LWMessagePushConnectionMethod.WebSocket;
@@ -102,6 +125,9 @@ var LWMessagePushClient = function (onMessageReceived, serverUrl, topic, connect
         };
     }
 
+    /**
+     *  Connects frontend to backend by using long polling
+     */
     function connectWithLongPolling() {
 
         _activeConnectionMethod = LWMessagePushConnectionMethod.LongPolling;
@@ -116,6 +142,10 @@ var LWMessagePushClient = function (onMessageReceived, serverUrl, topic, connect
         });
     }
 
+    /**
+     *  Extracts message content from incoming data and passes the content to onMessageReceived function
+     * @param {object} data incoming message data
+     */
     function processReceivedData(data) {
 
         if (!data)

@@ -22,7 +22,7 @@
 </head>
 <body>
     <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
-    <script src="http://localhost:29933/__lwpush/client"></script>
+    <script src="/__lwpush/client"></script>
     <script>
 
         $(function () {            
@@ -60,11 +60,16 @@
                 }
 
             });
+
+            $("#msg").text("To send \"testmsg\" message to \"test\" topic call: " + window.location.href + "home/sendmessage?topic=test&msg=testmsg")
+            $("#serverUrl").val(window.location.href);
         });
+
+
     </script>
     <h2>Sample App</h2>
     <div>
-        To send "testmsg" message to "test" topic call: http://localhost:29933/home/sendmessage?topic=test&msg=testmsg
+        <span id="msg"></span>
         <br /><br />
         <div class="row">
             <div class="cellLabel">
@@ -82,7 +87,7 @@
                 LWMessagePush Server Url:
             </div>
             <div class="cell">
-                <input type="text" id="serverUrl" value="http://localhost:29933" style="width:100%;" />
+                <input type="text" id="serverUrl" style="width:100%;" />
             </div>
         </div>
 

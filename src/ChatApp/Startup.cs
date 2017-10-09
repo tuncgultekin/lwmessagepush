@@ -9,9 +9,14 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using LWMessagePush.Middlewares;
 using Microsoft.Extensions.Configuration;
+using LWMessagePush.Logging;
+using ChatApp.Logging;
 
-namespace SampleApp
+namespace ChatApp
 {
+    /// <summary>
+    /// Configuration class for .net core service initialization
+    /// </summary>
     public class Startup
     {
         public IConfigurationRoot Configuration { get; }
@@ -52,7 +57,16 @@ namespace SampleApp
             }
 
             // Add LWMessagePush Middleware to the pipeline
-            app.UseLWMessagePush();
+            app.UseLWMessagePush(new LWMessagePush.Options.LWMessagePushMiddlewareOptions()
+            {
+                LongPollingConfiguration = new LWMessagePush.Options.LWMessagePushLongPollingOptions() { TimeoutSeconds = 10 },
+                WebSocketConfigurations = new LWMessagePush.Options.LWMessagePushWebSocketOptions()
+                {
+                    KeepAliveInterval = TimeSpan.FromSeconds(120),
+                    ReceiveBufferSize = 4 * 1024
+                },
+                LogListener = new ChatAppLWMessagePushLogListener()
+            });
 
             app.UseStaticFiles();
 
@@ -63,5 +77,5 @@ namespace SampleApp
                     template: "{controller=Home}/{action=Index}/{id?}");
             });
         }
-    }
+    }   
 }
