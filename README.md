@@ -3,13 +3,11 @@ LW-MessagePush & Sample Chat Application
 =========
 LW-MessagePush is a highly customizable and light-weight, message pushing library for cross-platform .NET Core web applications. It supports both websocket and long polling connection methods with auto-fallback feature.
 
-LW-MessagePush provides both font-end and back-end libraries. Through its front-end JavaScript library, any web UI framework technology that makes use of JavaScript, can adapt it easily.
-
-As backend framework, .Net Core platform is preferred because of its cross-platform web framework features and dependency injection capabilities for customization features. 
+LW-MessagePush provides both front-end and back-end libraries. Through its front-end JavaScript library, any web UI framework technology that makes use of JavaScript, can adapt it easily. As back-end framework, .Net Core platform is preferred because of its cross-platform web framework features and dependency injection capabilities for customization features. 
 
 To demonstrate functionality and usage of the LW-MessagePush, a simple test web application and Sample Chat Application is developed. Simple test application is a solid example of “Usage” instructions, which are described later sections in below. On the other hand, Sample Chat Application is a real-world usage example of LW-MessagePush. It includes both a single page application for front-end and a rest service back-end.
 
-In this document; architecture components, customization, scalability features and usage details of LW-MessagePush and Sample Chat Application are explained.
+In this document; architectural components, customization, scalability features and usage details of LW-MessagePush and Sample Chat Application are explained.
 
 Live Sample Chat Application: http://lwmessagepushchat.azurewebsites.net/
 
@@ -18,7 +16,8 @@ Sample Chat Application Demo Video: https://www.youtube.com/watch?v=J2U0j03enB4
 
 Architecture
 -----------
-LW-MessagePush takes advantages of IoC pattern, each of the connection handlers and persistence services are injected by interfaces. So, it can be easily customized. Currently LW-MessagePush supports WebSocket and Long Polling connection methods and in-memory message persistence layer. 
+LW-MessagePush takes advantages of IoC pattern, each of the connection handlers and persistence services are injected by interfaces. So, it can be easily customized (refer Customization section). Currently LW-MessagePush supports WebSocket and Long Polling connection methods and in-memory message persistence layer. 
+
 LW-MessagePush Project Namespaces:
 * DTOs:
   * PushMessage.cs :  Message data container class, that includes the properties of transferred messages.
@@ -68,7 +67,7 @@ LW-MessagePush Project Namespaces:
 
 Security
 -----------
-Depending on the http security of host app, front-end library automatically selects “ws” and “wss” websocket protocols.
+Depending on the http security of host app, front-end library automatically selects “ws” and “wss” websocket protocols. To improve the message level security, transmitting messages are needing to be encrpted. This feature is planned to be added in upcoming releases.
 
 
 Scalability
